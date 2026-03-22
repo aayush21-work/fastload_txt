@@ -41,6 +41,10 @@ inline void parse_rows_parallel(const char* file_data,
                                 int chunk_size = 500,
                                 int num_threads = 0) {
 
+
+     const size_t PARALLEL_THRESHOLD = 5000;
+                           
+
     // Set thread count if requested
     if (num_threads > 0) {
         omp_set_num_threads(num_threads);
@@ -48,7 +52,9 @@ inline void parse_rows_parallel(const char* file_data,
 
     // Each iteration is independent: thread i writes to output[i * num_cols].
     // No locks, no shared mutable state, no false sharing (rows are large).
-    #pragma omp parallel for schedule(dynamic, chunk_size)
+    
+    #pragma omp parallel for schedule(dynamic, chunk_size) \
+    	if(num_rows >= PARALLEL_THRESHOLD)
     for (size_t row = 0; row < num_rows; row++) {
 
         // Where does this line start and end in the file?
